@@ -163,3 +163,7 @@ cython_debug/
 # Data
 *.parquet
 *.csv
+*.pkl
+
+# MLflow runs' artefacts
+mlruns/
