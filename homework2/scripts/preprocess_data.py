@@ -11,16 +11,18 @@ def dump_pickle(obj, filename: str):
         return pickle.dump(obj, f_out)
 
 
-def read_dataframe(filename: str):
+def read_dataframe(filename: str) -> pd.DataFrame:
+    print("reading", filename)
     df = pd.read_parquet(filename)
-
-    df['duration'] = df['lpep_dropoff_datetime'] - df['lpep_pickup_datetime']
-    df.duration = df.duration.apply(lambda td: td.total_seconds() / 60)
-    df = df[(df.duration >= 1) & (df.duration <= 60)]
-
+    df['duration'] = df['tpep_dropoff_datetime'] - df['tpep_pickup_datetime']
+    df['duration'] = df['duration'].dt.seconds / 60.0
+    print("read", df.shape)
+    print(df.head())
+    df = df[(df['duration'] >= 1) & (df['duration'] <= 60)]
+    print("filtered", df.shape)
     categorical = ['PULocationID', 'DOLocationID']
     df[categorical] = df[categorical].astype(str)
-
+    print("returning", df.shape)
     return df
 
 
@@ -45,17 +47,21 @@ def preprocess(df: pd.DataFrame, dv: DictVectorizer, fit_dv: bool = False):
     "--dest_path",
     help="Location where the resulting files will be saved"
 )
-def run_data_prep(raw_data_path: str, dest_path: str, dataset: str = "green"):
+def run_data_prep(raw_data_path: str, dest_path: str, dataset: str = "yellow"):
     # Load parquet files
     df_train = read_dataframe(
         os.path.join(raw_data_path, f"{dataset}_tripdata_2023-01.parquet")
     )
+    print("SHAPPPE", df_train.shape)
     df_val = read_dataframe(
         os.path.join(raw_data_path, f"{dataset}_tripdata_2023-02.parquet")
     )
+    print("SHAPPPE", df_val.shape)
     df_test = read_dataframe(
         os.path.join(raw_data_path, f"{dataset}_tripdata_2023-03.parquet")
     )
+    print("SHAPPPE", df_test.shape)
+
 
     # Extract the target
     target = 'duration'
@@ -65,14 +71,17 @@ def run_data_prep(raw_data_path: str, dest_path: str, dataset: str = "green"):
 
     # Fit the DictVectorizer and preprocess data
     dv = DictVectorizer()
+    print("here0")
     X_train, dv = preprocess(df_train, dv, fit_dv=True)
     X_val, _ = preprocess(df_val, dv, fit_dv=False)
     X_test, _ = preprocess(df_test, dv, fit_dv=False)
+    print("here1")
 
     # Create dest_path folder unless it already exists
     os.makedirs(dest_path, exist_ok=True)
 
     # Save DictVectorizer and datasets
+    print("Saving at", os.path.join(dest_path, "dv.pkl"))
     dump_pickle(dv, os.path.join(dest_path, "dv.pkl"))
     dump_pickle((X_train, y_train), os.path.join(dest_path, "train.pkl"))
     dump_pickle((X_val, y_val), os.path.join(dest_path, "val.pkl"))
