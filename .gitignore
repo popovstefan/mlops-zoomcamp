@@ -167,3 +167,5 @@ cython_debug/
 
 # MLflow runs' artefacts
 mlruns/
+mlartifacts/
+rf-sklearn-model/

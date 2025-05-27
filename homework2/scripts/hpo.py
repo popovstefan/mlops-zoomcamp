@@ -9,7 +9,7 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import root_mean_squared_error
 
 mlflow.set_tracking_uri("http://127.0.0.1:5000")
-mlflow.set_experiment("random-forest-hyperopt")
+mlflow.set_experiment("random-forest-hyperopt-green")
 
 
 def load_pickle(filename: str):
@@ -30,14 +30,17 @@ def load_pickle(filename: str):
 )
 def run_optimization(data_path: str, num_trials: int):
 
-    X_train, y_train = load_pickle(os.path.join(data_path, "train.pkl"))
-    X_val, y_val = load_pickle(os.path.join(data_path, "val.pkl"))
+    X_train, y_train = load_pickle(os.path.join(data_path, "green_train.pkl"))
+    print("loaded train", X_train.shape)
+    X_val, y_val = load_pickle(os.path.join(data_path, "green_val.pkl"))
+    print("loaded val", X_val.shape)
 
     def objective(params):
-        print("here")
         with mlflow.start_run():
             rf = RandomForestRegressor(**params)
+            print("running with params", rf.get_params())
             rf.fit(X_train, y_train)
+            print("fitted, logging...")
             y_pred = rf.predict(X_val)
             rmse = root_mean_squared_error(y_val, y_pred)
             

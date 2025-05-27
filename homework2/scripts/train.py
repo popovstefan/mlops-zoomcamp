@@ -19,23 +19,23 @@ def load_pickle(filename: str):
     help="Location where the processed NYC taxi trip data was saved"
 )
 def run_train(data_path: str):
-    print("here1")
-    X_train, y_train = load_pickle(os.path.join(data_path, "train.pkl"))
-    print("here2")
-    X_val, y_val = load_pickle(os.path.join(data_path, "val.pkl"))
-    print("loaded data")
+    X_train, y_train = load_pickle(os.path.join(data_path, "green_train.pkl"))
+    print("loaded train", X_train.shape)
+    X_val, y_val = load_pickle(os.path.join(data_path, "green_val.pkl"))
+    print("loaded val", X_val.shape)
 
     rf = RandomForestRegressor(max_depth=10, random_state=0)
-    print('training')
+    print('fitting..')
     rf.fit(X_train, y_train)
-    print('predicting')
+    print('fitted. predicting..')
     y_pred = rf.predict(X_val)
+    print('predicted. evaluating..')
 
     rmse = root_mean_squared_error(y_val, y_pred)
     mlflow.log_metric(key="rmse_val", value=rmse)
 
 
 if __name__ == '__main__':
-    mlflow.sklearn.autolog()
+    mlflow.sklearn.autolog(log_datasets=False)
     with mlflow.start_run():
         run_train()
